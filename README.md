@@ -8,3 +8,4 @@ GuessMaster is an interactive number guessing web app built with HTML/CSS/JavaSc
 docker build -t guessmaster:v1 .
 docker run -d -p 8081:80 --name guessmaster guessmaster:v1
 # open http://localhost:8081
+<!-- test -->
