@@ -1,4 +1,4 @@
-name: Build and Push Docker image (and optional deploy)
+name: Build and Push Docker image (and deploy)
 
 on:
   push:
@@ -10,8 +10,8 @@ permissions:
 
 jobs:
   build-and-push:
-    name: Build & Push Docker image
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -34,38 +34,6 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/guessmaster:latest
-
-      - name: Output image info
-        run: echo "Pushed ${{ secrets.DOCKERHUB_USERNAME }}/guessmaster:latest"
-
-  deploy-to-ec2:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Install SSH client
-        run: sudo apt-get update && sudo apt-get install -y openssh-client
-
-      - name: Write SSH key
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$EC2_SSH_KEY" > ~/.ssh/ec2_key.pem
-          chmod 600 ~/.ssh/ec2_key.pem
-
-      - name: Deploy latest image to EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem $EC2_USER@$EC2_HOST "
-            docker pull $DOCKERHUB_USERNAME/guessmaster:latest &&
-            docker stop guessmaster || true &&
-            docker rm guessmaster || true &&
-            docker run -d -p 80:80 --name guessmaster $DOCKERHUB_USERNAME/guessmaster:latest
-          "
 
   deploy-to-ec2:
     needs: build-and-push
